@@ -1,0 +1,14 @@
+# HOPR mini chat
+
+A minimal React chat app on top of the [HOPR protocol](https://github.com/hoprnet/hoprnet).
+
+## HOPR node
+HOPR mini chat needs access to the http and ws API of a HOPR node. The http and ws endpoints are passed to the app along with the security token via URL parameters. The following example assumes that your are running a [local HOPR cluster](https://docs.hoprnet.org/developers/starting-local-cluster), if you are running HOPR differently please adjust the three parameters accordingly.
+
+Start the react app it via `npm start` and open the following link in your browser:
+
+```
+http://localhost:3000/?httpEndpoint=http://localhost:13304&wsEndpoint=ws://localhost:19504&securityToken=^^LOCAL-testing-123^^
+```
+
+This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
