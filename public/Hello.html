@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>HOPR Hello World App</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <h1>HOPR Hello World App</h1>
+    <h2>Send message:</h2>
+    <label htmlFor="recipient">recipient:</label>
+    <input type="text" id="recipient" value="16Uiu2HAmEhrw2e8tsxnGSfpjznPTLo6U99Ngtw2NLbauK7i8F9Bj" /> <br />
+    <label htmlFor="message">message:</label>
+    <textarea maxLength="400" id="message">Hello World!</textarea>
+    <br />
+    <button id="btn" onclick="submitMessage()">send</button>
+    <div id="messageList">
+      <h2>Received messages:</h2>
+    </div>
+    <script>
+
+    	// setting up the websocket listener
+      function setup() {
+        const params = new URLSearchParams(window.location.search)
+        const securityToken = params.get("securityToken")
+        const wsUrl = new URL(params.get("wsEndpoint"))
+        wsUrl.search = `?apiToken=${securityToken}`
+        const ws = new WebSocket(wsUrl)
+        ws.addEventListener("message", handleReceivedMessage)
+      }
+
+			// "send" button onclick Handler preparing the HOPR API call
+      function submitMessage() {
+        const recipient = document.getElementById("recipient").value
+        const message = document.getElementById("message").value
+        const body = {
+          recipient: recipient,
+          body: message
+        }
+        apiCall("messages", true, body)
+      }
+
+			// websocket message receiving handler
+      function handleReceivedMessage(e) {
+        try {
+          const data = JSON.parse(e.data)
+          console.log("WebSocket Data", data)
+          if (data.type === "message") {
+            const msgDiv = document.createElement("div")
+            msgDiv.innerHTML = data.ts + ":<br />" + data.msg + "<br /><br />"
+            document.getElementById("messageList").appendChild(msgDiv)
+          }
+        } catch (err) {
+          console.log(err)
+        }
+      }
+
+			// handling HOPR API calls by preparing the headers and formatting the body
+			// parameters "isPost" (should be "true" for POST) and "body" are optional
+      function apiCall(endpoint, isPost, body) {
+        const params = new URLSearchParams(window.location.search)
+        const securityToken = params.get("securityToken")
+        const httpEndpoint = params.get("httpEndpoint")
+        const h = new Headers()
+        h.set("Authorization", `Basic ${window.btoa(securityToken)}`)
+        let method = "GET"
+        if (typeof isPost !== "undefined" && isPost) {
+          method = "POST"
+          h.set("Content-Type", "application/json")
+          h.set("Accept-Content", "application/json")
+        }
+        let payload = {
+          headers: h,
+          method: method
+        }
+        if (typeof body !== "undefined") {
+          payload.body = JSON.stringify(body)
+        }
+        fetch(`${httpEndpoint}/api/v2/${endpoint}`, payload)
+          .catch((err) => console.error(err))
+      }
+
+      setup()
+    </script>
+  </body>
+</html>
