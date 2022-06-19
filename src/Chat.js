@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState, useEffect} from "react";
 
 class Contact extends React.Component {
   render() {
@@ -49,6 +49,156 @@ class Sender extends React.Component {
   }
 }
 
+function Send0000r(props) {
+	const [recipient, setRecipient] = useState("16Uiu2HAm9esLTuYnh8ERem5nk7XtGFyZbNz6a9afXnAdteWjgCVN")
+	const [msgText, setMsgText] = useState("Hello World")
+
+	const keyPressHandler = (event) => {
+    if (event.code === "Enter") {
+      props.onSubmit(recipient, msgText);
+    }
+  }
+
+	return(
+		<div>
+    <h2>Send message:</h2>
+    <label htmlFor="recipient">recipient:</label>
+    <input 
+    type="text" 
+    id="recipient" 
+    value={recipient}
+    onChange={e=>setRecipient(e.target.value)}
+    /> <br />
+    <label htmlFor="message">message:</label>
+    <textarea 
+    maxLength="400"
+    id="message"
+    value={msgText}
+    onChange={e=>setMsgText(e.target.value)}
+    onKeyDown={keyPressHandler}
+    />
+    <br />
+    <button
+    id="btn"
+    onClick={() => { props.onSubmit(recipient, msgText) }}>send</button> 
+ 		</div>
+	)
+}
+
+function Sett0000r (props) {
+	return(
+		<div>
+    <h2>HOPR node API settings</h2>
+    <label htmlFor="httpUrl">HTTP API URL:</label>
+    <input 
+    type="text" 
+    id="httpUrl" 
+    value={props.httpUrl} 
+    onChange={(e)=>{props.setHttpUrl(e.target.value)}}
+    /> <br />
+    <label htmlFor="wsUrl">websocket API URL:</label>
+    <input
+    type="text"
+    id="wsUrl" 
+    value={props.wsUrl}
+    onChange={(e)=>{props.setWsUrl(e.target.value)}}
+    /> <br />
+    <label htmlFor="apiToken">API token:</label>
+    <input 
+    type="text" 
+    id="apiToken" 
+    value={props.apiToken}
+    onChange={(e)=>{props.setApiToken(e.target.value)}}
+    /> <br />
+		</div>
+	)
+}
+
+function Chat0000r(props) {
+	const [httpUrl, setHttpUrl] = useState("http://localhost:13301")
+	const [wsUrl, setWsUrl] = useState("ws://localhost:19501")
+	const [apiToken, setApiToken] = useState("^^LOCAL-testing-123^^")
+	const [messages, setMessages] = useState([])
+	const ws = newWebSocket(wsUrl)
+
+	useEffect(() => {
+		console.log("USE_EFFECT0000r!!!")
+    if (typeof(ws) !== "undefined")
+      ws.close()
+    const wsU = new URL(wsUrl)
+    wsU.search = `?apiToken=${apiToken}`
+    setWs(new WebSocket(wsU))
+    ws.addEventListener("message", handleReceivedMessage)
+    return (() => { ws.close() } )
+  })
+
+	// websocket message receiving handler
+  function handleReceivedMessage(e) {
+    try {
+      const data = JSON.parse(e.data)
+      console.log("WebSocket Data", data)
+      if (data.type === "message") {
+      	setMessages([...messages, data])
+      	console.log(`Now we got ${messages.length} messages, latest: ${JSON.stringify(data)}`)
+        //const msgDiv = document.createElement("div")
+        //msgDiv.innerHTML = data.ts + ":<br />" + data.msg + "<br /><br />"
+        //document.getElementById("messageList").appendChild(msgDiv)
+      }
+    } catch (err) {
+      console.log(err)
+    }
+  }
+	
+	function apiCall(endpoint, method="GET", body) {
+    const h = new Headers()
+    h.set("Authorization", `Basic ${window.btoa(apiToken)}`)
+    if (method === "POST") {
+      h.set("Content-Type", "application/json")
+      h.set("Accept-Content", "application/json")
+    }
+    if (method === "PUT") {
+      h.set("Content-Type", "application/json")
+    }
+    let payload = {
+      headers: h,
+      method: method
+    }
+    if (typeof body !== "undefined") {
+      payload.body = JSON.stringify(body)
+    }
+    fetch(`${httpUrl}/api/v2/${endpoint}`, payload)
+    	.catch((err) => console.error(err))
+  }
+
+	function postMessage(recipient, messageText) {
+    const body = {
+      recipient: recipient,
+      body: messageText
+    }
+    apiCall("messages", "POST", body)
+  }
+
+	return (
+		<div>
+		<h1>HOPR Mini Chat</h1>
+		<Sett0000r 
+		httpUrl={httpUrl}
+		wsUrl={wsUrl}
+		apiToken={apiToken}
+		setHttpUrl={setHttpUrl}
+		setWsUrl={setWsUrl}
+		setApiToken={setApiToken}
+		/>
+   	<Send0000r
+   	onSubmit={postMessage}
+   	/> 
+   	<div id="messageList">
+    <h2>Received messages:</h2>
+    </div>
+    </div>
+ 	)
+}
+
 class Chat extends React.Component {
   constructor(props) {
     super(props)
@@ -56,10 +206,10 @@ class Chat extends React.Component {
     this.apiCall = this.apiCall.bind(this)
     const params = new URLSearchParams(window.location.search)
     const securityToken = params.get("securityToken")
-    const wsUrl = new URL(params.get("wsEndpoint"))
+    const wsUrl = new URL(params.get("wsUrl"))
     wsUrl.search = `?apiToken=${securityToken}`
     this.state = {
-      httpEndpoint: params.get("httpEndpoint"),
+      httpUrl: params.get("httpUrl"),
       securityToken: securityToken,
       wsUrl: wsUrl,
       messages: []
@@ -104,7 +254,7 @@ class Chat extends React.Component {
     if (typeof body !== "undefined") {
       payload.body = JSON.stringify(body)
     }
-    fetch(`${this.state.httpEndpoint}/api/v2/${endpoint}`, payload)
+    fetch(`${this.state.httpUrl}/api/v2/${endpoint}`, payload)
     	.catch((err) => console.error(err))
   }
 
@@ -136,4 +286,4 @@ class Chat extends React.Component {
   }
 }
 
-export default Chat;
+export default Chat0000r;
